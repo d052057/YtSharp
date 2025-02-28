@@ -1,0 +1,66 @@
+<div class="container">
+  <h1>YouTube Downloader</h1>
+
+  <div class="form-group">
+    <label for="url">Video URL:</label>
+    <input type="text"
+           id="url"
+           class="form-control"
+           [(ngModel)]="url"
+           placeholder="Enter YouTube URL"
+           [disabled]="isDownloading">
+  </div>
+  <div class="form-group">
+    <label for="options">Custom Options (one per line):</label>
+    <textarea id="options"
+              class="form-control"
+              [(ngModel)]="options"
+              rows="3"
+              placeholder="Enter custom options"
+              [disabled]="isDownloading"></textarea>
+  </div>
+  <div class="form-group">
+    <label class="checkbox-container">
+      <input type="checkbox"
+             [(ngModel)]="audioOnly"
+             [disabled]="isDownloading">
+      <span class="checkbox-label">Audio Only (MP3)</span>
+    </label>
+  </div>
+  <div class="button-group">
+    <button class="btn primary"
+            (click)="startDownload()"
+            [disabled]="!url || isDownloading">
+      Download
+    </button>
+
+    <button class="btn secondary"
+            (click)="fetchVideoInfo()"
+            [disabled]="!url || isDownloading">
+      Show Information
+    </button>
+  </div>
+  <div class="progress-container" *ngIf="downloadStatus">
+    <div class="state-info">
+      <span class="label">Status:</span>
+      <span class="value">{{ downloadStatus.state }}</span>
+    </div>
+
+    <div class="progress-bar-container">
+      <div class="progress-bar"
+           [style.width.%]="downloadStatus.progress || 0">
+      </div>
+    </div>
+
+    <div class="progress-info" *ngIf="downloadStatus.downloadSpeed">
+      <span>Speed: {{ downloadStatus.downloadSpeed }} | Left: {{ downloadStatus.eta }}</span>
+    </div>
+  </div>
+
+  <div class="output-container">
+    <h3>Output:</h3>
+    <div class="output-text">
+      <p *ngFor="let line of output">{{ line }}</p>
+    </div>
+  </div>
+</div>
