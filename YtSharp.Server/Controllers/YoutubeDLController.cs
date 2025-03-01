@@ -1,11 +1,14 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using YoutubeDLSharp;
 using YoutubeDLSharp.Metadata;
 using YoutubeDLSharp.Options;
+using YtSharp.Server.Models;
+using static YtSharp.Server.Models.YtSharpModel;
 namespace YtSharp.Server.Controllers
 {
     [ApiController]
@@ -26,29 +29,7 @@ namespace YtSharp.Server.Controllers
             _downloads = [];
         }
 
-        // Model to receive download requests
-        public class DownloadRequest
-        {
-            public string? Url { get; set; }
-            public bool AudioOnly { get; set; }
-            public string? Options { get; set; }
-        }
-
-        // Model to track download status
-        public class DownloadStatus
-        {
-            public string? Id { get; set; }
-            public string? Url { get; set; }
-            public string? State { get; set; }
-            public double Progress { get; set; }
-            public string? DownloadSpeed { get; set; }
-            public string? ETA { get; set; }
-            public List<string> Output { get; set; } = new List<string>();
-            public bool IsCompleted { get; set; }
-            public bool IsSuccessful { get; set; }
-            public string? FilePath { get; set; }
-            public string? ErrorMessage { get; set; }
-        }
+        
 
         [HttpPost("download")]
         public async Task<IActionResult> Download([FromBody] DownloadRequest request)
@@ -89,6 +70,7 @@ namespace YtSharp.Server.Controllers
                     var output = new Progress<string>(s =>
                     {
                         downloadStatus.Output.Add(s);
+                        
                     });
 
                     // Parse custom options
@@ -146,14 +128,14 @@ namespace YtSharp.Server.Controllers
         }
 
         [HttpGet("status/{id}")]
-        public IActionResult GetDownloadStatus(string id)
+        public Task<IActionResult> GetDownloadStatus(string id)
         {
             if (!_downloads.TryGetValue(id, out var status))
             {
-                return NotFound("Download not found");
+                return Task.FromResult<IActionResult>(NotFound("Download not found"));
             }
 
-            return Ok(status);
+            return Task.FromResult<IActionResult>(Ok(status));
         }
 
         [HttpGet("info")]
