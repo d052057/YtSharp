@@ -41,9 +41,11 @@ export class YoutubeDlComponent implements OnDestroy {
       options: this.options
     };
 
-    this.youtubeDlService.downloadVideo(request).subscribe({
+    this.youtubeDlService.downloadVideo(request)
+      .subscribe({
       next: (response) => {
         this.currentDownloadId = response.downloadId;
+        //alert("response.downloadId:" + response.downloadId);
         this.startStatusPolling();
       },
       error: (error) => {
@@ -52,6 +54,18 @@ export class YoutubeDlComponent implements OnDestroy {
         this.showErrorMessage('Failed to start download', error.message);
       }
     });
+    
+  }
+  private showErrorMessage(title: string, message: string): void {
+    alert(`${title}: ${message}`);
+  }
+  private showSuccessMessage(filePath: string): void {
+    alert(`Successfully downloaded "${this.url}" to:\n"${filePath}".`);
+  }
+  startStatusPolling(): void {
+    if (!this.currentDownloadId) {
+      return;
+    }
 
     // Poll status every 1 second
     this.statusSubscription = interval(1000)
@@ -85,17 +99,6 @@ export class YoutubeDlComponent implements OnDestroy {
           this.statusSubscription?.unsubscribe();
         }
       });
-  }
-  private showErrorMessage(title: string, message: string): void {
-    alert(`${title}: ${message}`);
-  }
-  private showSuccessMessage(filePath: string): void {
-    alert(`Successfully downloaded "${this.url}" to:\n"${filePath}".`);
-  }
-  startStatusPolling(): void {
-    if (!this.currentDownloadId) {
-      return;
-    }
   }
   private showVideoInfoDialog(info: any): void {
     // This would be implemented with Angular Material or another dialog library

@@ -22,7 +22,8 @@ namespace YtSharp.Server.Controllers
                 OutputFolder = @"c:\medias\poster",
                 FFmpegPath = "ffmpeg.exe"
             };
-            _downloads = new Dictionary<string, DownloadStatus>();
+            //_downloads = new Dictionary<string, DownloadStatus>();
+            _downloads = [];
         }
 
         // Model to receive download requests
