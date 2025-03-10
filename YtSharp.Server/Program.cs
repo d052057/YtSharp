@@ -4,13 +4,21 @@ using Microsoft.Extensions.FileProviders;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System.Text.Json.Serialization;
+using YtSharp.Server.services;
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 // Add services to the container.
 builder.Services.AddDirectoryBrowser();
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
-
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IYtSharpService, YtSharpService>();
 builder.Services.AddControllers().AddNewtonsoftJson(
                options =>
                {
@@ -55,11 +63,13 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.UseSwaggerUI(
-        options => {
-            options.SwaggerEndpoint("../openapi/v1.json", "version 1");  
+        options =>
+        {
+            options.SwaggerEndpoint("../openapi/v1.json", "version 1");
         });
 }
-
+app.UseRouting();
+app.UseSession();
 app.UseHttpsRedirection();
 
 app.UseAuthorization();

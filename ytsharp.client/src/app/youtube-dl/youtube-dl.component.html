@@ -10,7 +10,6 @@
            placeholder="Enter YouTube URL"
            [disabled]="isDownloading">
   </div>
-  <p> download Id {{ currentDownloadId }}</p>
   <div class="form-group">
     <label for="options">Custom Options (one per line):</label>
     <textarea id="options"
@@ -65,3 +64,4 @@
     </div>
   </div>
 </div>
+<p> {{ downloadStatus | json }}</p>

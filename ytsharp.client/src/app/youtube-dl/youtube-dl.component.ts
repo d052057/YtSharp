@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, JsonPipe } from '@angular/common';
 import { Component, inject, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { YoutubeDlService, DownloadStatus } from './youtube-dl-service';
@@ -6,7 +6,7 @@ import { interval, Subscription, switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-youtube-dl',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, JsonPipe],
   templateUrl: './youtube-dl.component.html',
   styleUrl: './youtube-dl.component.scss'
 })
@@ -45,7 +45,6 @@ export class YoutubeDlComponent implements OnDestroy {
       .subscribe({
       next: (response) => {
         this.currentDownloadId = response.downloadId;
-        //alert("response.downloadId:" + response.downloadId);
         this.startStatusPolling();
       },
       error: (error) => {
