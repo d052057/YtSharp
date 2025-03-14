@@ -4,20 +4,14 @@ using Microsoft.Extensions.FileProviders;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System.Text.Json.Serialization;
+using YtSharp.Server;
 using YtSharp.Server.services;
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddDistributedMemoryCache();
-builder.Services.AddSession(options =>
-{
-    options.IdleTimeout = TimeSpan.FromMinutes(30);
-    options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true;
-});
 // Add services to the container.
+builder.Services.AddSignalR();
 builder.Services.AddDirectoryBrowser();
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
-builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IYtSharpService, YtSharpService>();
 builder.Services.AddControllers().AddNewtonsoftJson(
                options =>
@@ -69,11 +63,11 @@ if (app.Environment.IsDevelopment())
         });
 }
 app.UseRouting();
-app.UseSession();
+
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
-
+app.MapHub<DownloadHub>("/downloadHub");
 app.MapControllers();
 
 app.MapFallbackToFile("/index.html");

@@ -1,8 +1,10 @@
 import { CommonModule, JsonPipe } from '@angular/common';
-import { Component, inject, OnDestroy } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { YoutubeDlService, DownloadStatus } from './youtube-dl-service';
+import { YoutubeDlService} from './youtube-dl-service';
+import { SignalRService } from './signalr.service';
 import { interval, Subscription, switchMap } from 'rxjs';
+import { DownloadStatus} from "./youtube-dl.model";
 
 @Component({
   selector: 'app-youtube-dl',
@@ -10,23 +12,41 @@ import { interval, Subscription, switchMap } from 'rxjs';
   templateUrl: './youtube-dl.component.html',
   styleUrl: './youtube-dl.component.scss'
 })
-export class YoutubeDlComponent implements OnDestroy {
+export class YoutubeDlComponent {
   youtubeDlService = inject(YoutubeDlService);
+  signalRService = inject(SignalRService);
   url: string = '';
   isDownloading: boolean = false;
   options: string = '';
   audioOnly: boolean = false;
   downloadStatus: DownloadStatus | null = null;
   output: string[] = [];
-  statusSubscription: Subscription | null = null;
   currentDownloadId: string | null = null;
-  ngOnDestroy(): void {
-    if (this.statusSubscription) {
-      this.statusSubscription.unsubscribe();
-    }
+  constructor() {
+    // Subscribe to progress updates from SignalR
+    this.signalRService.progress$.subscribe(({ downloadId, status }) => {
+      if (downloadId === this.currentDownloadId) {
+        this.downloadStatus = status;
+        console.log(JSON.stringify(status));
+        // Update UI with latest output
+        if (status.output && status.output.length > this.output.length) {
+          this.output = [...status.output];
+        }
+
+        // Check if download is completed
+        if (status.isCompleted) {
+          this.isDownloading = false;
+
+          if (status.isSuccessful) {
+            this.showSuccessMessage(status.filePath);
+          } else {
+            this.showErrorMessage('Download failed', status.errorMessage);
+          }
+        }
+      }
+    });
   }
-
-
+  
   startDownload(): void {
     if (!this.url || this.isDownloading) {
       return;
@@ -45,7 +65,6 @@ export class YoutubeDlComponent implements OnDestroy {
       .subscribe({
       next: (response) => {
         this.currentDownloadId = response.downloadId;
-        this.startStatusPolling();
       },
       error: (error) => {
         console.error('Error starting download:', error);
@@ -61,49 +80,6 @@ export class YoutubeDlComponent implements OnDestroy {
   private showSuccessMessage(filePath: string): void {
     alert(`Successfully downloaded "${this.url}" to:\n"${filePath}".`);
   }
-  startStatusPolling(): void {
-    if (!this.currentDownloadId) {
-      return;
-    }
-
-    // Poll status every 1 second
-    this.statusSubscription = interval(1000)
-      .pipe(
-        switchMap(() => this.youtubeDlService.getDownloadStatus(this.currentDownloadId!))
-      )
-      .subscribe({
-        next: (status) => {
-          this.downloadStatus = status;
-
-          // Update UI with latest output
-          if (status.output && status.output.length > this.output.length) {
-            this.output = [...status.output];
-          }
-
-          // Check if download is completed
-          if (status.isCompleted) {
-            this.isDownloading = false;
-            this.statusSubscription?.unsubscribe();
-
-            if (status.isSuccessful) {
-              this.showSuccessMessage(status.filePath);
-            } else {
-              this.showErrorMessage('Download failed', status.errorMessage);
-            }
-          }
-        },
-        error: (error) => {
-          console.error('Error polling status:', error);
-          this.isDownloading = false;
-          this.statusSubscription?.unsubscribe();
-        }
-      });
-  }
-  private showVideoInfoDialog(info: any): void {
-    // This would be implemented with Angular Material or another dialog library
-    const infoString = JSON.stringify(info, null, 2);
-    alert(`Video Information:\n${infoString}`);
-  }
   fetchVideoInfo(): void {
     if (!this.url) {
       return;
@@ -118,7 +94,12 @@ export class YoutubeDlComponent implements OnDestroy {
       error: (error) => {
         console.error('Error fetching video info:', error);
         this.showErrorMessage('Failed to fetch video information', error.message);
-      }
+      },
     });
+  }
+  private showVideoInfoDialog(info: any): void {
+    // This would be implemented with Angular Material or another dialog library
+    const infoString = JSON.stringify(info, null, 2);
+    alert(`Video Information:\n${infoString}`);
   }
 }

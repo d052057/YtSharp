@@ -7,6 +7,7 @@ const PROXY_CONFIG = [
   {
     context: [
       "/api",
+      "/downloadHub"
     ],
     target,
     secure: false

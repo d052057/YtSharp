@@ -1,29 +1,29 @@
-﻿using Newtonsoft.Json;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System;
-using System.Linq;
-using Microsoft.AspNetCore.Mvc;
-using static YtSharp.Server.Models.YtSharpModel;
+﻿using System;
 using System.Collections.Concurrent;
+using System.Threading.Tasks;
 using YoutubeDLSharp;
 using YoutubeDLSharp.Metadata;
 using YoutubeDLSharp.Options;
 using YtSharp.Server.Models;
-using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.SignalR;
+using static YtSharp.Server.Models.YtSharpModel;
+using System.Diagnostics;
+
 namespace YtSharp.Server.services
 {
     public interface IYtSharpService
     {
         Task<string> StartDownload(DownloadRequest request);
-        DownloadStatus? GetDownloadStatus(string id);
         Task<VideoData> GetVideoInfo(string url);
     }
+
     public class YtSharpService : IYtSharpService
     {
         private readonly YoutubeDL _youtubeDL;
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        public YtSharpService(IHttpContextAccessor httpContextAccessor)
+        private readonly IHubContext<DownloadHub> _hubContext;
+        private readonly ConcurrentDictionary<string, DownloadStatus> _downloads = new();
+
+        public YtSharpService(IHubContext<DownloadHub> hubContext)
         {
             _youtubeDL = new YoutubeDL
             {
@@ -31,30 +31,9 @@ namespace YtSharp.Server.services
                 OutputFolder = @"c:\medias\poster",
                 FFmpegPath = "ffmpeg.exe"
             };
-            _httpContextAccessor = httpContextAccessor;
+            _hubContext = hubContext;
         }
 
-        private Dictionary<string, DownloadStatus> Downloads
-        {
-            get
-            {
-                var sessionData = _httpContextAccessor?.HttpContext?.Session.GetString("Downloads");
-                if (sessionData != null)
-                {
-                    // Use null-coalescing operator to handle potential null return
-                    return JsonConvert.DeserializeObject<Dictionary<string, DownloadStatus>>(sessionData)
-                        ?? [];
-                }
-                else
-                {
-                    return [];
-                }
-            }
-            set
-            {
-                _httpContextAccessor?.HttpContext?.Session.SetString("Downloads", JsonConvert.SerializeObject(value));
-            }
-        }
         public async Task<string> StartDownload(DownloadRequest request)
         {
             if (string.IsNullOrEmpty(request.Url))
@@ -64,7 +43,7 @@ namespace YtSharp.Server.services
             string downloadId = Guid.NewGuid().ToString();
 
             // Initialize download status
-            var downloadStatus = new DownloadStatus
+            DownloadStatus downloadStatus = new()
             {
                 Id = downloadId,
                 Url = request.Url,
@@ -73,13 +52,8 @@ namespace YtSharp.Server.services
                 IsCompleted = false
             };
 
-            // Store the download status
-            //_downloads[downloadId] = downloadStatus;
-
-            var downloads = Downloads;
-            downloads[downloadStatus.Id] = downloadStatus;
-            Downloads = downloads;
-
+            // Store the download status in memory
+            _downloads[downloadId] = downloadStatus;
 
             // Start download process asynchronously
             await Task.Run(async () =>
@@ -88,7 +62,7 @@ namespace YtSharp.Server.services
                 {
                     var progress = new Progress<DownloadProgress>(p =>
                     {
-                        // Create a local copy of downloadStatus and update it
+                        // Update the download status
                         var updatedStatus = new DownloadStatus
                         {
                             Id = downloadStatus.Id,
@@ -104,25 +78,19 @@ namespace YtSharp.Server.services
                             ErrorMessage = downloadStatus.ErrorMessage
                         };
 
-                        // Lock the downloads dictionary while updating
-                        lock (this)
-                        {
-                            var downloads = Downloads;
-                            downloads[updatedStatus.Id] = updatedStatus;
-                            Downloads = downloads;
-                        }
+                        // Update in-memory status
+                        _downloads[downloadId] = updatedStatus;
+
+                        // Send progress update to the client via SignalR
+                        _ = _hubContext.Clients.All.SendAsync("ReceiveProgress", downloadId, updatedStatus);
                     });
 
                     var output = new Progress<string>(s =>
                     {
-                        lock (this)
-                        {
-                            var downloads = Downloads;
-                            var status = downloads[downloadStatus.Id];
-                            status.Output.Add(s);
-                            downloads[downloadStatus.Id] = status;
-                            Downloads = downloads;
-                        }
+                        // Update output in-memory
+                        var status = _downloads[downloadId];
+                        status.Output.Add(s);
+                        _downloads[downloadId] = status;
                     });
 
                     // Parse custom options
@@ -166,10 +134,12 @@ namespace YtSharp.Server.services
                     {
                         downloadStatus.ErrorMessage = string.Join("\n", result.ErrorOutput);
                     }
-                    // Update final status in session
-                    var downloads = Downloads;
-                    downloads[downloadStatus.Id] = downloadStatus;
-                    Downloads = downloads;
+
+                    // Update in-memory status
+                    _downloads[downloadId] = downloadStatus;
+
+                    // Send final update to the client via SignalR
+                    await _hubContext.Clients.All.SendAsync("ReceiveProgress", downloadId, downloadStatus);
                 }
                 catch (Exception ex)
                 {
@@ -177,23 +147,17 @@ namespace YtSharp.Server.services
                     downloadStatus.IsSuccessful = false;
                     downloadStatus.ErrorMessage = ex.Message;
 
-                    // Update session in case of error
-                    var downloads = Downloads;
-                    downloads[downloadStatus.Id] = downloadStatus;
-                    Downloads = downloads;
+                    // Update in-memory status
+                    _downloads[downloadId] = downloadStatus;
+
+                    // Send error update to the client via SignalR
+                    await _hubContext.Clients.All.SendAsync("ReceiveProgress", downloadId, downloadStatus);
                 }
             });
 
             return downloadId;
         }
-        public DownloadStatus? GetDownloadStatus(string id)
-        {
-            var downloads = Downloads;
-            if (downloads == null) return null;
 
-            downloads.TryGetValue(id, out var status);
-            return status;
-        }
         public async Task<VideoData> GetVideoInfo(string url)
         {
             if (string.IsNullOrEmpty(url))
@@ -208,6 +172,5 @@ namespace YtSharp.Server.services
 
             throw new Exception(string.Join("\n", result.ErrorOutput));
         }
-
     }
 }
