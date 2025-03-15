@@ -8,6 +8,8 @@ using YtSharp.Server;
 using YtSharp.Server.services;
 var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
+builder.Services.AddCors();
+
 builder.Services.AddSignalR();
 builder.Services.AddDirectoryBrowser();
 builder.Services.AddControllers();
@@ -31,7 +33,11 @@ builder.Services.AddControllers().AddNewtonsoftJson(
             );
 
 var app = builder.Build();
-
+app.UseCors(opt =>
+{
+    opt.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+});
+app.UseHttpsRedirection();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 var MimeProvider = new FileExtensionContentTypeProvider();
@@ -50,8 +56,6 @@ app.UseDirectoryBrowser(new DirectoryBrowserOptions
     RequestPath = "/medias"
 });
 
-
-
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -63,8 +67,6 @@ if (app.Environment.IsDevelopment())
         });
 }
 app.UseRouting();
-
-app.UseHttpsRedirection();
 
 app.UseAuthorization();
 app.MapHub<DownloadHub>("/downloadHub");

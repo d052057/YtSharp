@@ -19,15 +19,16 @@ export class YoutubeDlComponent {
   isDownloading: boolean = false;
   options: string = '';
   audioOnly: boolean = false;
-  downloadStatus: DownloadStatus | null = null;
+  downloadStatus!: DownloadStatus;
   output: string[] = [];
   currentDownloadId: string | null = null;
   constructor() {
     // Subscribe to progress updates from SignalR
     this.signalRService.progress$.subscribe(({ downloadId, status }) => {
+      console.log("Yitong DownloadID="+ downloadId+ " status="+ JSON.stringify(status))
       if (downloadId === this.currentDownloadId) {
         this.downloadStatus = status;
-        console.log(JSON.stringify(status));
+        console.log("Yitong:"+ JSON.stringify(status));
         // Update UI with latest output
         if (status.output && status.output.length > this.output.length) {
           this.output = [...status.output];

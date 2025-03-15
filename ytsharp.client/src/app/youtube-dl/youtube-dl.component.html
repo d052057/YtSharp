@@ -40,19 +40,20 @@
       Show Information
     </button>
   </div>
-  <div class="progress-container" *ngIf="downloadStatus">
+  <div class="progress-container" >
     <div class="state-info">
       <span class="label">Status:</span>
       <span class="value">{{ downloadStatus.state }}</span>
     </div>
 
     <div class="progress-bar-container">
+      <span class="label">Progress:</span>
       <div class="progress-bar"
            [style.width.%]="downloadStatus.progress || 0">
       </div>
     </div>
 
-    <div class="progress-info" *ngIf="downloadStatus.downloadSpeed">
+    <div class="progress-info" >
       <span>Speed: {{ downloadStatus.downloadSpeed }} | Left: {{ downloadStatus.eta }}</span>
     </div>
   </div>

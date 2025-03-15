@@ -29,8 +29,7 @@ export class SignalRService {
     // Listen for progress updates from the server
     this.hubConnection.on('ReceiveProgress', (downloadId: string, status: DownloadStatus) => {
       this.progressSubject.next({ downloadId, status });
-      //console.log("downloadid:" + downloadId);
-      //console.log("status:" + JSON.stringify(status))
+      console.log('Progress Update:', downloadId, JSON.stringify(status));
     });
   }
 }
