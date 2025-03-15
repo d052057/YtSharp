@@ -25,10 +25,10 @@ export class YoutubeDlComponent {
   constructor() {
     // Subscribe to progress updates from SignalR
     this.signalRService.progress$.subscribe(({ downloadId, status }) => {
-      console.log("Yitong DownloadID="+ downloadId+ " status="+ JSON.stringify(status))
+      console.log("Progres$ DownloadID="+ downloadId+ " status="+ JSON.stringify(status))
       if (downloadId === this.currentDownloadId) {
         this.downloadStatus = status;
-        console.log("Yitong:"+ JSON.stringify(status));
+        console.log("progress$:"+ JSON.stringify(status));
         // Update UI with latest output
         if (status.output && status.output.length > this.output.length) {
           this.output = [...status.output];
