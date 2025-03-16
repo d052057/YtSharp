@@ -1,10 +1,10 @@
 import { CommonModule, JsonPipe } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit, signal, Signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { YoutubeDlService} from './youtube-dl-service';
 import { SignalRService } from './signalr.service';
 import { interval, Subscription, switchMap } from 'rxjs';
-import { DownloadStatus} from "./youtube-dl.model";
+import { DownloadStatus } from "./youtube-dl.model";
 
 @Component({
   selector: 'app-youtube-dl',
@@ -12,23 +12,25 @@ import { DownloadStatus} from "./youtube-dl.model";
   templateUrl: './youtube-dl.component.html',
   styleUrl: './youtube-dl.component.scss'
 })
-export class YoutubeDlComponent {
+export class YoutubeDlComponent implements OnInit {
   youtubeDlService = inject(YoutubeDlService);
   signalRService = inject(SignalRService);
   url: string = '';
   isDownloading: boolean = false;
   options: string = '';
   audioOnly: boolean = false;
-  downloadStatus!: DownloadStatus;
+  public downloadStatus = signal<DownloadStatus | null>(null);
   output: string[] = [];
   currentDownloadId: string | null = null;
-  constructor() {
+  ngOnInit(): void {
+    // Start SignalR connection
+    this.signalRService.startConnection();
+
     // Subscribe to progress updates from SignalR
     this.signalRService.progress$.subscribe(({ downloadId, status }) => {
-      console.log("Progres$ DownloadID="+ downloadId+ " status="+ JSON.stringify(status))
       if (downloadId === this.currentDownloadId) {
-        this.downloadStatus = status;
-        console.log("progress$:"+ JSON.stringify(status));
+        console.log("Updating downloadStatus signal with:", JSON.stringify(status));
+        this.downloadStatus.set({...status });
         // Update UI with latest output
         if (status.output && status.output.length > this.output.length) {
           this.output = [...status.output];
@@ -89,7 +91,7 @@ export class YoutubeDlComponent {
     this.youtubeDlService.getVideoInfo(this.url).subscribe({
       next: (info) => {
         // Open a dialog or navigate to a component to display video info
-        console.log('Video info:', info);
+ /*       console.log('Video info:', info);*/
         this.showVideoInfoDialog(info);
       },
       error: (error) => {

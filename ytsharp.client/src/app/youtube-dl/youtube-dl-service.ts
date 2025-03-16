@@ -11,11 +11,6 @@ export class YoutubeDlService {
   private apiUrl = '/api/youtubedl';
   http = inject(HttpClient);
   signalRService = inject(SignalRService);
-  constructor() {
-    this.signalRService.startConnection(); // Start SignalR connection when the service is initialized
-  }
-
-
   downloadVideo(request: DownloadRequest): Observable<DownloadResponse> {
     return this.http.post<DownloadResponse>(`${this.apiUrl}/download`, request);
   }

@@ -16,7 +16,6 @@ export class SignalRService {
   constructor() {
     this.hubConnection = new signalR.HubConnectionBuilder()
       .withUrl(this.apiHub) // Match the SignalR hub URL on the server
-      .withAutomaticReconnect()
       .build();
   }
 
@@ -29,7 +28,6 @@ export class SignalRService {
     // Listen for progress updates from the server
     this.hubConnection.on('ReceiveProgress', (downloadId: string, status: DownloadStatus) => {
       this.progressSubject.next({ downloadId, status });
-      console.log('Progress Update:', downloadId, JSON.stringify(status));
     });
   }
 }

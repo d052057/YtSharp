@@ -64,7 +64,7 @@ namespace YtSharp.Server.services
                     var progress = new Progress<DownloadProgress>(p =>
                     {
                         // debug return data
-                        Console.WriteLine($"Progress: {p.Progress}%, State: {p.State}, Speed: {p.DownloadSpeed}, ETA: {p.ETA}");
+                        //Console.WriteLine($"Progress: {p.Progress}%, State: {p.State}, Speed: {p.DownloadSpeed}, ETA: {p.ETA}");
                         // Update the download status
                         var updatedStatus = new DownloadStatus
                         {
@@ -86,7 +86,7 @@ namespace YtSharp.Server.services
 
                         // Send progress update to the client via SignalR
                         _ = _hubContext.Clients.All.SendAsync("ReceiveProgress", downloadId, updatedStatus);
-                        Console.WriteLine($"Sent progress update for {downloadId}: {updatedStatus.Progress}%");
+                        //Console.WriteLine($"Sent progress update for {downloadId}: {updatedStatus.Progress}%");
                     });
 
                     var output = new Progress<string>(s =>
@@ -144,7 +144,7 @@ namespace YtSharp.Server.services
 
                     // Send final update to the client via SignalR
                     await _hubContext.Clients.All.SendAsync("ReceiveProgress", downloadId, downloadStatus);
-                    Console.WriteLine($"Sent ReceiveProgress update for {downloadId}: {downloadStatus.Progress}%");
+                    //Console.WriteLine($"Sent ReceiveProgress update for {downloadId}: {downloadStatus.Progress}%");
                 }
                 catch (Exception ex)
                 {
@@ -157,7 +157,7 @@ namespace YtSharp.Server.services
 
                     // Send error update to the client via SignalR
                     await _hubContext.Clients.All.SendAsync("ReceiveProgress", downloadId, downloadStatus);
-                    Console.WriteLine($"Sent ReceiveProgress  update for {downloadId}: {downloadStatus.Progress}%");
+                    //Console.WriteLine($"Sent ReceiveProgress  update for {downloadId}: {downloadStatus.Progress}%");
 
                 }
             });

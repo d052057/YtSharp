@@ -40,24 +40,25 @@
       Show Information
     </button>
   </div>
-  <div class="progress-container" >
-    <div class="state-info">
-      <span class="label">Status:</span>
-      <span class="value">{{ downloadStatus.state }}</span>
-    </div>
+  <div *ngIf="downloadStatus()">
+    <div class="progress-container">
+      <div class="state-info">
+        <span class="label">Status:</span>
+        <span class="value">{{ downloadStatus()?.state }}</span>
+      </div>
 
-    <div class="progress-bar-container">
-      <span class="label">Progress:</span>
-      <div class="progress-bar"
-           [style.width.%]="downloadStatus.progress || 0">
+      <div class="progress-bar-container">
+        <span class="label">Progress:</span>
+        <div class="progress-bar"
+             [style.width.%]="downloadStatus()?.progress || 0">
+        </div>
+      </div>
+
+      <div class="progress-info">
+        <span>Speed: {{ downloadStatus()?.downloadSpeed }} | Left: {{ downloadStatus()?.eta }}</span>
       </div>
     </div>
-
-    <div class="progress-info" >
-      <span>Speed: {{ downloadStatus.downloadSpeed }} | Left: {{ downloadStatus.eta }}</span>
-    </div>
   </div>
-
   <div class="output-container">
     <h3>Output:</h3>
     <div class="output-text">
@@ -65,4 +66,9 @@
     </div>
   </div>
 </div>
-<p> {{ downloadStatus | json }}</p>
+<div *ngIf="downloadStatus()">
+  <p>Progress: {{ downloadStatus()?.progress }}%</p>
+  <p>State: {{ downloadStatus()?.state }}</p>
+  <p>Download Speed: {{ downloadStatus()?.downloadSpeed }}</p>
+  <p>ETA: {{ downloadStatus()?.eta }}</p>
+</div>
