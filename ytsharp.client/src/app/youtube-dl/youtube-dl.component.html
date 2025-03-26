@@ -40,22 +40,22 @@
       Show Information
     </button>
   </div>
-  <div *ngIf="downloadStatus()">
+  <div *ngIf="downloadStatus | async as status">
     <div class="progress-container">
       <div class="state-info">
         <span class="label">Status:</span>
-        <span class="value">{{ downloadStatus()?.state }}</span>
+        <span class="value">{{ status.state }}</span>
       </div>
 
       <div class="progress-bar-container">
         <span class="label">Progress:</span>
         <div class="progress-bar"
-             [style.width.%]="downloadStatus()?.progress || 0">
+             [style.width.%]="status.progress || 0">
         </div>
       </div>
 
       <div class="progress-info">
-        <span>Speed: {{ downloadStatus()?.downloadSpeed }} | Left: {{ downloadStatus()?.eta }}</span>
+        <span>Speed: {{ status.downloadSpeed }} | Left: {{ status.eta }}</span>
       </div>
     </div>
   </div>
@@ -66,9 +66,9 @@
     </div>
   </div>
 </div>
-<div *ngIf="downloadStatus()">
-  <p>Progress: {{ downloadStatus()?.progress }}%</p>
-  <p>State: {{ downloadStatus()?.state }}</p>
-  <p>Download Speed: {{ downloadStatus()?.downloadSpeed }}</p>
-  <p>ETA: {{ downloadStatus()?.eta }}</p>
+<div *ngIf="downloadStatus | async as status">
+  <p>Progress: {{ status.progress }}%</p>
+  <p>State: {{ status.state }}</p>
+  <p>Download Speed: {{ status.downloadSpeed }}</p>
+  <p>ETA: {{ status.eta }}</p>
 </div>

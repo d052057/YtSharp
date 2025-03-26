@@ -9,6 +9,11 @@ export const routes: Routes = [
     path: 'youtubedl',
     loadComponent: () => import('../app/youtube-dl/youtube-dl.component')
       .then(mod => mod.YoutubeDlComponent)
+  },
+  {
+    path: 'chat',
+    loadComponent: () => import('../app/chat/chat.component')
+      .then(mod => mod.ChatComponent)
   }
 ];
 

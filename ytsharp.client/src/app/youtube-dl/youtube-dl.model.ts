@@ -2,6 +2,7 @@ export interface DownloadRequest {
   url: string;
   audioOnly: boolean;
   options: string;
+  downloadId: string;
 }
 
 export interface DownloadResponse {

@@ -9,12 +9,13 @@ using Microsoft.AspNetCore.SignalR;
 using static YtSharp.Server.Models.YtSharpModel;
 using System.Diagnostics;
 using System.Data;
+using YtSharp.Server.Hubs;
 
 namespace YtSharp.Server.services
 {
     public interface IYtSharpService
     {
-        Task<string> StartDownload(DownloadRequest request);
+        Task StartDownload(DownloadRequest request);
         Task<VideoData> GetVideoInfo(string url);
     }
 
@@ -35,18 +36,15 @@ namespace YtSharp.Server.services
             _hubContext = hubContext;
         }
 
-        public async Task<string> StartDownload(DownloadRequest request)
+        public async Task StartDownload(DownloadRequest request)
         {
-            if (string.IsNullOrEmpty(request.Url))
-                throw new ArgumentException("URL is required");
-
             // Create download ID
-            string downloadId = Guid.NewGuid().ToString();
+            string downloadId = request.DownloadId;
 
             // Initialize download status
             DownloadStatus downloadStatus = new()
             {
-                Id = downloadId,
+                Id = request.DownloadId,
                 Url = request.Url,
                 State = "Initializing",
                 Progress = 0,
@@ -63,9 +61,6 @@ namespace YtSharp.Server.services
                 {
                     var progress = new Progress<DownloadProgress>(p =>
                     {
-                        // debug return data
-                        //Console.WriteLine($"Progress: {p.Progress}%, State: {p.State}, Speed: {p.DownloadSpeed}, ETA: {p.ETA}");
-                        // Update the download status
                         var updatedStatus = new DownloadStatus
                         {
                             Id = downloadStatus.Id,
@@ -86,7 +81,6 @@ namespace YtSharp.Server.services
 
                         // Send progress update to the client via SignalR
                         _ = _hubContext.Clients.All.SendAsync("ReceiveProgress", downloadId, updatedStatus);
-                        //Console.WriteLine($"Sent progress update for {downloadId}: {updatedStatus.Progress}%");
                     });
 
                     var output = new Progress<string>(s =>
@@ -144,7 +138,6 @@ namespace YtSharp.Server.services
 
                     // Send final update to the client via SignalR
                     await _hubContext.Clients.All.SendAsync("ReceiveProgress", downloadId, downloadStatus);
-                    //Console.WriteLine($"Sent ReceiveProgress update for {downloadId}: {downloadStatus.Progress}%");
                 }
                 catch (Exception ex)
                 {
@@ -157,12 +150,9 @@ namespace YtSharp.Server.services
 
                     // Send error update to the client via SignalR
                     await _hubContext.Clients.All.SendAsync("ReceiveProgress", downloadId, downloadStatus);
-                    //Console.WriteLine($"Sent ReceiveProgress  update for {downloadId}: {downloadStatus.Progress}%");
 
                 }
             });
-
-            return downloadId;
         }
 
         public async Task<VideoData> GetVideoInfo(string url)

@@ -15,17 +15,9 @@ namespace YtSharp.Server.Controllers
         }
 
         [HttpPost("download")]
-        public async Task<IActionResult> Download([FromBody] DownloadRequest request)
+        public async Task Download([FromBody] DownloadRequest request)
         {
-            try
-            {
-                string downloadId = await _ytSharpService.StartDownload(request);
-                return Ok(new { DownloadId = downloadId });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { Error = ex.Message });
-            }
+                await _ytSharpService.StartDownload(request);      
         }
 
         [HttpGet("info")]

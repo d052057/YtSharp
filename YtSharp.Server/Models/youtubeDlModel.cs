@@ -8,6 +8,7 @@
             public string? Url { get; set; }
             public bool AudioOnly { get; set; }
             public string? Options { get; set; }
+            public required string DownloadId { get; set; }
         }
 
         // Model to track download status

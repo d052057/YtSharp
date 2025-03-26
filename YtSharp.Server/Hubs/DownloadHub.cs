@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using static YtSharp.Server.Models.YtSharpModel;
 using System.Threading.Tasks;
-namespace YtSharp.Server
+namespace YtSharp.Server.Hubs
 {
     public class DownloadHub : Hub
     {

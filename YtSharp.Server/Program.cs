@@ -4,9 +4,10 @@ using Microsoft.Extensions.FileProviders;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System.Text.Json.Serialization;
-using YtSharp.Server;
+using YtSharp.Server.Hubs;
 using YtSharp.Server.services;
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddEndpointsApiExplorer();
 // Add services to the container.
 builder.Services.AddCors();
 
@@ -35,7 +36,12 @@ builder.Services.AddControllers().AddNewtonsoftJson(
 var app = builder.Build();
 app.UseCors(opt =>
 {
-    opt.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+    opt
+    .WithOrigins("https://127.0.0.1:63349", "https://localhost:63349")
+    .AllowAnyHeader()
+    .AllowAnyMethod()
+    .AllowCredentials()
+    ;
 });
 app.UseHttpsRedirection();
 app.UseDefaultFiles();
@@ -69,9 +75,9 @@ if (app.Environment.IsDevelopment())
 app.UseRouting();
 
 app.UseAuthorization();
-app.MapHub<DownloadHub>("/downloadHub");
 app.MapControllers();
-
+app.MapHub<ChatHub>("/chat");
+app.MapHub<DownloadHub>("/downloadHub");
 app.MapFallbackToFile("/index.html");
 
 app.Run();

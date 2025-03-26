@@ -12,7 +12,7 @@ export class SignalRService {
   private progressSubject = new Subject<{ downloadId: string; status: DownloadStatus }>();
 
   public progress$ = this.progressSubject.asObservable();
-  private apiHub = '/downloadHub';
+  private apiHub = 'https://localhost:7217/downloadHub';
   constructor() {
     this.hubConnection = new signalR.HubConnectionBuilder()
       .withUrl(this.apiHub) // Match the SignalR hub URL on the server
