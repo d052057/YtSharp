@@ -1,14 +1,10 @@
 export interface DownloadRequest {
+  id: string;
   url: string;
   audioOnly: boolean;
   options: string;
-  downloadId: string;
-}
-
-export interface DownloadResponse {
-  downloadId: string;
-}
-
+  outputFolder: string;
+};
 export interface DownloadStatus {
   id: string;
   url: string;

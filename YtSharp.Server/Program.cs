@@ -1,21 +1,26 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.FileProviders;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System.Text.Json.Serialization;
 using YtSharp.Server.Hubs;
-using YtSharp.Server.services;
+using YtSharp.Server.Service;
+using System.Diagnostics;
+using Microsoft.Extensions.Logging;
+
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 // Add services to the container.
 builder.Services.AddCors();
 
 builder.Services.AddSignalR();
+builder.Services.AddHttpClient();
 builder.Services.AddDirectoryBrowser();
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
-builder.Services.AddScoped<IYtSharpService, YtSharpService>();
+builder.Services.AddScoped<IDownloadService, DownloadService>();
 builder.Services.AddControllers().AddNewtonsoftJson(
                options =>
                {
@@ -34,10 +39,16 @@ builder.Services.AddControllers().AddNewtonsoftJson(
             );
 
 var app = builder.Build();
+
+var corsUrls = builder.Configuration.GetSection("CorsUrls:AllowedOrigins").Get<string[]>();
+if (corsUrls == null)
+{
+    throw new InvalidOperationException("CorsUrls:AllowedOrigins configuration section is missing or empty.");
+}
 app.UseCors(opt =>
 {
     opt
-    .WithOrigins("https://127.0.0.1:63349", "https://localhost:63349")
+    .WithOrigins(corsUrls)
     .AllowAnyHeader()
     .AllowAnyMethod()
     .AllowCredentials()
@@ -75,9 +86,9 @@ if (app.Environment.IsDevelopment())
 app.UseRouting();
 
 app.UseAuthorization();
-app.MapControllers();
-app.MapHub<ChatHub>("/chat");
-app.MapHub<DownloadHub>("/downloadHub");
+
+app.MapControllers(); // Maps your API controllers
+app.MapHub<DownloadHub>("/downloadHub"); // Maps your SignalR hub
 app.MapFallbackToFile("/index.html");
 
 app.Run();

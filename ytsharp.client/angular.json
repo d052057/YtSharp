@@ -83,7 +83,12 @@
           "defaultConfiguration": "development",
           "options": {
             "proxyConfig": "src/proxy.conf.js",
-            "port": 63349
+            "port": 63349,
+            "headers": {
+              "Access-Control-Allow-Origin": "*",
+              "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+              "Access-Control-Allow-Headers": "Content-Type, Authorization"
+            }
           }
         },
         "extract-i18n": {
